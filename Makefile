@@ -1,6 +1,6 @@
-IMAGE_NAME ?= docker.io/twistlock/authz-broker
-PACKAGES=$(shell go list ./...)
-VERSION ?= v1.0.0
+IMAGE_NAME ?= authz-broker
+PACKAGES=$(shell go list ./... | sed -r 's/.*?\/([^\/]+)$$/.\/\1/')
+VERSION ?= 1.0.1
 IMAGE_VERSION ?= $(VERSION)
 
 .PHONY: all binary test image vet lint clean
@@ -16,7 +16,7 @@ fmt:
 	gofmt -w $(SRCS)
 
 vet:
-	@go vet ${PACKAGES}
+	@ go vet ${PACKAGES}
 
 lint:
 	@ go get -v golang.org/x/lint/golint
@@ -28,6 +28,7 @@ image: test
 binary: lint fmt vet
 	mkdir -p bin/
 	CGO_ENABLED=0 go build -o bin/authz-broker --ldflags "-X \"main.version=$(VERSION)\"" -a -installsuffix cgo ./broker/main.go
+	strip -sg bin/authz-broker
 
 test: binary
 	go test -v ${PACKAGES}
